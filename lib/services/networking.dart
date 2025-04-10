@@ -4,11 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:shopping_app/dtos/auth_response_dto.dart';
 import 'package:shopping_app/dtos/register_request_dto.dart';
 
-const String userUrl = 'http://localhost:8081/api/auth';
+const String userUrl = 'http://10.0.2.2:8081/api/auth'; // android emulator
+//const String userUrl = 'http://localhost:8081/api/auth'; // ios emulator
 
 class NetworkHelper {
   late final String url;
-  NetworkHelper(this.url);
 
   Future loginUser(String usernameOrEmail, String password) async {
     // add the headers
@@ -22,7 +22,7 @@ class NetworkHelper {
       'password': password,
     });
     // add the url
-    url = "$url/signin";
+    url = "$userUrl/signin";
     // make the login request
     try {
       http.Response response =
@@ -40,23 +40,17 @@ class NetworkHelper {
   }
 
   Future registerUser(RegisterRequestDto registerDto) async {
-    // add the body
-    final body = {
-      'firstName': registerDto.firstName,
-      'lastName': registerDto.lastName,
-      'username': registerDto.username,
-      'phone': registerDto.phone,
-      'email': registerDto.email,
-      'password': registerDto.password,
-    };
+    final headers = {'Content-Type': 'application/json'};
     // add the url
-    url = "$url/signup";
+    url = "$userUrl/signup";
     // make the login request
     try {
-      http.Response response = await http.post(Uri.parse(url), body: body);
+      http.Response response = await http.post(Uri.parse(url),
+          body: jsonEncode(registerDto.toJson()), headers: headers);
       if (response.statusCode == 201) {
-        String data = response.body;
-        return data;
+        //String data = response.body;
+        //return data;
+        return "Registration successful";
       } else {
         print(response.statusCode);
       }

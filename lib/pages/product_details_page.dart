@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shopping_app/provider/cart_provider.dart';
 
 class ProductDetailsPage extends StatefulWidget {
+  // require product object in page constructor
   final Map<String, Object> product;
   const ProductDetailsPage({super.key, required this.product});
 

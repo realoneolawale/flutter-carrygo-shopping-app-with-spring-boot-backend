@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shopping_app/pages/cart_page.dart';
+import 'package:shopping_app/pages/login_page.dart';
+import 'package:shopping_app/pages/register_page.dart';
 import 'package:shopping_app/widgets/product_list.dart';
 
 class HomePage extends StatefulWidget {
@@ -14,6 +16,8 @@ class _HomePageState extends State<HomePage> {
   List<Widget> pages = [
     ProductList(),
     CartPage(),
+    RegisterPage(),
+    LoginPage(),
   ];
 
   @override
@@ -37,11 +41,31 @@ class _HomePageState extends State<HomePage> {
         currentIndex: currentPage, // currently selected page
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(
+              Icons.home,
+              color: Colors.black,
+            ),
             label: '',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
+            icon: Icon(
+              Icons.shopping_cart,
+              color: Colors.black,
+            ),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.person,
+              color: Colors.black,
+            ),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.login,
+              color: Colors.black,
+            ),
             label: '',
           ),
         ],
