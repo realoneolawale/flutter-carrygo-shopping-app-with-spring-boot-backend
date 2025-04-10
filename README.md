@@ -1,16 +1,18 @@
-# shopping_app
+# CarryGo Shopping App
+A shopping cart system built with Flutter 
 
-A Flutter shopping app project.
+## Main feature
+Features a traditional shopping cart system, users can view the catalogue, filter the catalogue based on the preferences, add items to cart, make a register and place an order. 
 
-## Getting Started
+## Details
+CarryGo store features a Flutter shopping cart system a with Java (Spring Boot) backend at the repo: [CarryGo backend](https://github.com/realoneolawale/spring-boot-ecommerce-api-carrygo-store)
 
-This project is a starting point for a Flutter application.
+## Core Functionality
+* View catalogue
+* Filter catalogue by category
+* View product details
+* Add item to cart 
+* Remove item from cart
+* Payment and ordering 
+* State management with Provider package
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
