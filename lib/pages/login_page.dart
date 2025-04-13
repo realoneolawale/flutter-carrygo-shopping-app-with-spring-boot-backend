@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
-import 'package:shopping_app/dtos/auth_response_dto.dart';
+import 'package:provider/provider.dart';
+import 'package:shopping_app/provider/cart_provider.dart';
+import 'package:shopping_app/provider/navigation_provider.dart';
 import 'package:shopping_app/services/networking.dart';
 
 class LoginPage extends StatefulWidget {
@@ -28,10 +30,18 @@ class _LoginPageState extends State<LoginPage> {
       });
       // attempt the login
       NetworkHelper helper = NetworkHelper();
-      AuthResponseDto response =
-          await helper.loginUser(usernameOrEmail, password);
+      dynamic response = await helper.loginUser(usernameOrEmail, password);
       // to the the product list page or profile page
-      print("ACCESS TOKEN: " + response.accessToken);
+      if (response == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('If an account exists, login is invalid.')));
+      } else {
+        // put the logged in user in the provider
+        Provider.of<CartProvider>(context, listen: false).user = response;
+        // navigate to the product list page with the user object
+        // Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ProductList(authResponseUser: response,)),);
+        context.read<NavigationProvider>().setIndex(0);
+      }
       // remove the spinner
       setState(() {
         showSpinner = false;
@@ -52,71 +62,73 @@ class _LoginPageState extends State<LoginPage> {
         title: const Text('Login'),
         centerTitle: true,
       ),
-      body: ModalProgressHUD(
-        inAsyncCall: showSpinner,
-        child: Padding(
-          padding: EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Align(
-                alignment: Alignment.center,
-                child: Text(
-                  'Login to CarryGo',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              SizedBox(
-                height: 48.0,
-              ),
-              TextField(
-                onChanged: (value) {
-                  usernameOrEmail = value;
-                },
-                decoration: InputDecoration(
-                  hintText: 'Email or username',
-                  icon: Icon(Icons.info),
-                  border: border,
-                  enabledBorder: border,
-                  focusedBorder: border,
-                ),
-              ),
-              SizedBox(
-                height: 8.0,
-              ),
-              TextField(
-                onChanged: (value) {
-                  password = value;
-                },
-                obscureText: true,
-                decoration: InputDecoration(
-                  hintText: 'Password',
-                  icon: Icon(Icons.password),
-                  border: border,
-                  enabledBorder: border,
-                  focusedBorder: border,
-                ),
-              ),
-              SizedBox(
-                height: 24.0,
-              ),
-              Padding(
-                padding: EdgeInsets.all(20.0),
-                child: ElevatedButton(
-                  onPressed: onTap,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    //minimumSize: const Size(double.infinity, 50),
-                    fixedSize: const Size(350, 50),
-                  ),
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(color: Colors.black, fontSize: 16),
+      body: SafeArea(
+        child: ModalProgressHUD(
+          inAsyncCall: showSpinner,
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Login to CarryGo',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
-              ),
-            ],
+                SizedBox(
+                  height: 48.0,
+                ),
+                TextField(
+                  onChanged: (value) {
+                    usernameOrEmail = value;
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Email or username',
+                    icon: Icon(Icons.info),
+                    border: border,
+                    enabledBorder: border,
+                    focusedBorder: border,
+                  ),
+                ),
+                SizedBox(
+                  height: 8.0,
+                ),
+                TextField(
+                  onChanged: (value) {
+                    password = value;
+                  },
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: 'Password',
+                    icon: Icon(Icons.password),
+                    border: border,
+                    enabledBorder: border,
+                    focusedBorder: border,
+                  ),
+                ),
+                SizedBox(
+                  height: 24.0,
+                ),
+                Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: ElevatedButton(
+                    onPressed: onTap,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      //minimumSize: const Size(double.infinity, 50),
+                      fixedSize: const Size(350, 50),
+                    ),
+                    child: const Text(
+                      'Login',
+                      style: TextStyle(color: Colors.black, fontSize: 16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

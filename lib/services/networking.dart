@@ -10,7 +10,7 @@ const String userUrl = 'http://10.0.2.2:8081/api/auth'; // android emulator
 class NetworkHelper {
   late final String url;
 
-  Future loginUser(String usernameOrEmail, String password) async {
+  Future<dynamic> loginUser(String usernameOrEmail, String password) async {
     // add the headers
     final headers = {
       'Content-Type': 'application/json',
@@ -28,10 +28,16 @@ class NetworkHelper {
       http.Response response =
           await http.post(Uri.parse(url), headers: headers, body: body);
       if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        return AuthResponseDto.fromJson(json);
+        // get json string
+        //final json = jsonDecode(response.body);
+        // convert JSON string to Map
+        Map<String, dynamic> authResponseMap =
+            jsonDecode(response.body) as Map<String, dynamic>;
+        // create DTO from Map
+        AuthResponseDto responseDto = AuthResponseDto.fromJson(authResponseMap);
+        return responseDto;
       } else {
-        throw Exception('Login failed');
+        return null;
       }
     } catch (e) {
       print(e);
@@ -48,9 +54,8 @@ class NetworkHelper {
       http.Response response = await http.post(Uri.parse(url),
           body: jsonEncode(registerDto.toJson()), headers: headers);
       if (response.statusCode == 201) {
-        //String data = response.body;
-        //return data;
-        return "Registration successful";
+        String data = response.body;
+        return data;
       } else {
         print(response.statusCode);
       }
