@@ -32,12 +32,16 @@ class ProductCard extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           SizedBox(height: 5),
-          Text('\$$price', style: Theme.of(context).textTheme.bodySmall),
+          Text('\$${price.toStringAsFixed(2)}',
+              style: Theme.of(context).textTheme.bodySmall),
           Center(
-            child: Image(
-              image: AssetImage(image),
-              height: 175,
-            ),
+            child: Image.network(image,
+                loadingBuilder: (context, child, progress) {
+              if (progress == null) return child;
+              return CircularProgressIndicator();
+            }, errorBuilder: (context, error, stackTrace) {
+              return Icon(Icons.error);
+            }, height: 175),
           ),
           // Image.Asset(image, height: 175),
         ],

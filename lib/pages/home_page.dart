@@ -15,38 +15,75 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // set page list for the bottom navigation
+  List<Widget> pages = [ProductList(), CartPage()];
+  // set the page bottom navigation icons
+  List<BottomNavigationBarItem> items = [
+    BottomNavigationBarItem(
+      icon: Icon(
+        Icons.home,
+        color: Colors.black,
+      ),
+      label: '',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(
+        Icons.shopping_cart,
+        color: Colors.black,
+      ),
+      label: '',
+    )
+  ];
+
   @override
   Widget build(BuildContext context) {
+    // get the providers
     final navigationProvider = Provider.of<NavigationProvider>(context);
-    final user = Provider.of<CartProvider>(context).user;
-    List<Widget> pages = [
-      ProductList(),
-      CartPage(),
-    ];
-    List<BottomNavigationBarItem> items = [
-      BottomNavigationBarItem(
-        icon: Icon(
-          Icons.home,
-          color: Colors.black,
-        ),
-        label: '',
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(
-          Icons.shopping_cart,
-          color: Colors.black,
-        ),
-        label: '',
-      )
-    ];
+    final user = Provider.of<CartProvider>(context).getAuthResponseDto;
 
-    //print("USER: " + user.firstName);
-
-    if (!user.firstName.isNotEmpty) {
-      pages.add(RegisterPage());
-      pages.add(LoginPage());
-
+    // if the user is logged in - don't show the login and registration page
+    if (user != null) {
+      if (user.firstName!.isNotEmpty) {
+        pages.clear();
+        items.clear();
+        pages.addAll([ProductList(), CartPage()]);
+        items.addAll([
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.home,
+              color: Colors.black,
+            ),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.shopping_cart,
+              color: Colors.black,
+            ),
+            label: '',
+          ),
+        ]);
+      }
+    } else {
+      // when the user is logged out
+      pages.clear();
+      items.clear();
+      pages.addAll([ProductList(), CartPage(), RegisterPage(), LoginPage()]);
       items.addAll([
+        BottomNavigationBarItem(
+          icon: Icon(
+            Icons.home,
+            color: Colors.black,
+          ),
+          label: '',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(
+            Icons.shopping_cart,
+            color: Colors.black,
+          ),
+          label: '',
+        ),
         BottomNavigationBarItem(
           icon: Icon(
             Icons.person,

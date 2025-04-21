@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:shopping_app/provider/cart_provider.dart';
+import 'package:shopping_app/dtos/cart_response_dto.dart';
+import 'package:shopping_app/dtos/product_response_dto.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   // require product object in page constructor
-  final Map<String, Object> product;
+  final ProductResponseDto product;
   const ProductDetailsPage({super.key, required this.product});
 
   @override
@@ -13,25 +13,33 @@ class ProductDetailsPage extends StatefulWidget {
 
 class _ProductDetailsPageState extends State<ProductDetailsPage> {
   int selectedSize = 0;
+  static const String imageBaseUrl = 'http://192.168.0.175:40160/';
 
   void onTap() {
-    if (selectedSize != 0) {
-      Provider.of<CartProvider>(context, listen: false)
-          //.addProduct(widget.product);
-          .addProduct({
-        'id': widget.product['id'],
-        'company': widget.product['company'],
-        'title': widget.product['title'],
-        'price': widget.product['price'],
-        'imageUrl': widget.product['imageUrl'],
-        'size': selectedSize,
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product Added to Cart!')));
-    } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Please select a size!')));
-    }
+    CartResponseDto cartResponseDto = CartResponseDto(
+        price: 0,
+        productId: 0,
+        qty: 0,
+        totalAmount: 0,
+        imageUrl: '',
+        productName: '');
+    // if (selectedSize != 0) {
+    //   Provider.of<CartProvider>(context, listen: false)
+    //       //.addProduct(widget.product);
+    //       .addProduct({
+    //     'id': widget.product['id'],
+    //     'company': widget.product['company'],
+    //     'title': widget.product['title'],
+    //     'price': widget.product['price'],
+    //     'imageUrl': widget.product['imageUrl'],
+    //     'size': selectedSize,
+    //   });
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //       const SnackBar(content: Text('Product Added to Cart!')));
+    // } else {
+    //   ScaffoldMessenger.of(context)
+    //       .showSnackBar(const SnackBar(content: Text('Please select a size!')));
+    // }
   }
 
   @override
@@ -42,14 +50,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         child: Column(
           children: [
             Text(
-              widget.product['title'] as String,
+              widget.product.name,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const Spacer(),
             Padding(
               padding: EdgeInsets.all(16.0),
-              child: Image.asset(
-                widget.product['imageUrl'] as String,
+              child: Image.network(
+                '$imageBaseUrl${widget.product.imageUrl}',
                 height: 250,
               ),
             ),
@@ -64,37 +72,15 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "\$${widget.product['price']}",
+                    "\$${widget.product.price.toStringAsFixed(2)}",
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 10),
                   // sized box
-                  SizedBox(
-                    height: 50,
-                    child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount:
-                            (widget.product['sizes'] as List<int>).length,
-                        itemBuilder: (context, index) {
-                          final size =
-                              (widget.product['sizes'] as List<int>)[index];
-                          return Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  selectedSize = size;
-                                });
-                              },
-                              child: Chip(
-                                label: Text(size.toString()),
-                                backgroundColor: selectedSize == size
-                                    ? Theme.of(context).colorScheme.primary
-                                    : null,
-                              ),
-                            ),
-                          );
-                        }),
+                  Expanded(
+                    child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Text(widget.product.details)),
                   ),
                   Padding(
                     padding: EdgeInsets.all(20.0),

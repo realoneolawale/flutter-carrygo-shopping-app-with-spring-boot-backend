@@ -1,10 +1,10 @@
 class AuthResponseDto {
-  final String accessToken;
-  final String tokenType;
-  final int id;
-  final String firstName;
-  final String email;
-  final String username;
+  String? accessToken;
+  String? tokenType;
+  int? id;
+  String? firstName;
+  String? email;
+  String? username;
 
   AuthResponseDto({
     required this.accessToken,

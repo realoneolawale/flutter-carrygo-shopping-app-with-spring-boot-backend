@@ -3,9 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:shopping_app/dtos/auth_response_dto.dart';
 import 'package:shopping_app/provider/cart_provider.dart';
 import 'package:shopping_app/provider/navigation_provider.dart';
+import 'package:shopping_app/services/networking.dart';
+import 'package:shopping_app/services/sharedpreferences.dart';
 import 'package:shopping_app/widgets/product_card.dart';
 
-import '../global_variables.dart';
 import '../pages/product_details_page.dart';
 
 class ProductList extends StatefulWidget {
@@ -18,11 +19,44 @@ class _ProductListState extends State<ProductList> {
   final List<String> filters = const ['All', 'Addidas', 'Nike', 'Bata', 'Puma'];
   late String selectedFilter;
   late String loggedInUser;
-  late AuthResponseDto authResponseUser;
+  late AuthResponseDto authResponseUser = AuthResponseDto(
+      accessToken: '',
+      tokenType: '',
+      id: 0,
+      firstName: '',
+      email: '',
+      username: '');
+  int? categoryId;
+  static const String imageBaseUrl = 'http://192.168.0.175:40160/';
 
   @override
   void initState() {
+    // set the authenticated user
+    setAuthenticatedUser();
+    //getProducts();
     super.initState();
+  }
+
+  // set the authenticated user in the shared
+  setAuthenticatedUser() async {
+    // set the authenticated user in the provider
+    // if user is not in the provider
+    if (authResponseUser.username!.isEmpty) {
+      if (SharedPreferenceHelper().getUsername().toString().isNotEmpty) {
+        // set the user from the shared preferences
+        authResponseUser.tokenType =
+            await SharedPreferenceHelper().getTokenType() ?? "";
+        authResponseUser.accessToken =
+            await SharedPreferenceHelper().getAccessTokenId() ?? "";
+        authResponseUser.id = await SharedPreferenceHelper().getId() ?? 0;
+        authResponseUser.firstName =
+            await SharedPreferenceHelper().getFirstName() ?? "";
+        authResponseUser.email =
+            await SharedPreferenceHelper().getEmail() ?? "";
+        authResponseUser.username =
+            await SharedPreferenceHelper().getUsername() ?? "";
+      }
+    }
   }
 
   @override
@@ -33,8 +67,15 @@ class _ProductListState extends State<ProductList> {
     selectedFilter = filters[0];
     // set the currently logged in user
     final navigationProvider = Provider.of<NavigationProvider>(context);
-    authResponseUser =
-        Provider.of<CartProvider>(context).user; // listen for changes
+    final userDto = context.watch<CartProvider>().getAuthResponseDto;
+    if (userDto != null) {
+      if (userDto.firstName!.isNotEmpty) {
+        authResponseUser.username = userDto.username;
+        authResponseUser.firstName = userDto.firstName;
+      }
+    }
+    print("Product List Username: " + authResponseUser.username.toString());
+    print("Product List Firstname: " + authResponseUser.firstName.toString());
     // set the logged in user
     if (authResponseUser.firstName.toString().isNotEmpty) {
       loggedInUser = "Hi ${authResponseUser.firstName} ⛄️";
@@ -54,16 +95,17 @@ class _ProductListState extends State<ProductList> {
                   content: Text('Are you sure you want to logout?'),
                   actions: [
                     TextButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.of(context).pop();
-                        Provider.of<CartProvider>(context, listen: false).user =
-                            AuthResponseDto(
+                        Provider.of<CartProvider>(context, listen: false)
+                            .setAuthResponseDto(AuthResponseDto(
                                 accessToken: '',
                                 tokenType: '',
                                 id: 0,
                                 firstName: '',
                                 email: '',
-                                username: '');
+                                username: ''));
+                        await SharedPreferenceHelper().clearSharedPreference();
                         // redirect to the product list tab
                         navigationProvider.setIndex(0);
                       },
@@ -167,51 +209,88 @@ class _ProductListState extends State<ProductList> {
             ),
             Expanded(
               child: size.width > 650
-                  ? GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 2,
-                      ),
-                      itemCount: products.length,
-                      itemBuilder: (context, index) {
-                        final product = products[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.of(context)
-                                .push(MaterialPageRoute(builder: (context) {
-                              return ProductDetailsPage(product: product);
-                            }));
-                          },
-                          child: ProductCard(
-                            title: product['title'] as String,
-                            price: product['price'] as double,
-                            image: product['imageUrl'] as String,
-                            backgroundColor: index.isEven
-                                ? const Color.fromRGBO(216, 240, 253, 1)
-                                : const Color.fromRGBO(245, 247, 249, 1),
+                  ? FutureBuilder(
+                      future: NetworkHelper().getProducts(categoryId),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        } else if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else if (!snapshot.hasData ||
+                            snapshot.data!.isEmpty) {
+                          return Text('No products found');
+                        }
+                        final products = snapshot.data!;
+
+                        return GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 2,
                           ),
+                          itemCount: products.length,
+                          itemBuilder: (context, index) {
+                            final product = products[index];
+                            final productImageUrl =
+                                '$imageBaseUrl${product.imageUrl}';
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.of(context)
+                                    .push(MaterialPageRoute(builder: (context) {
+                                  return ProductDetailsPage(product: product);
+                                }));
+                              },
+                              child: ProductCard(
+                                title: product.name,
+                                price: double.parse(product.price.toString()),
+                                image: productImageUrl,
+                                backgroundColor: index.isEven
+                                    ? const Color.fromRGBO(216, 240, 253, 1)
+                                    : const Color.fromRGBO(245, 247, 249, 1),
+                              ),
+                            );
+                          },
                         );
-                      })
-                  : ListView.builder(
-                      itemCount: products.length,
-                      itemBuilder: (context, index) {
-                        final product = products[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.of(context)
-                                .push(MaterialPageRoute(builder: (context) {
-                              return ProductDetailsPage(product: product);
-                            }));
+                      },
+                    )
+                  : FutureBuilder(
+                      future: NetworkHelper().getProducts(categoryId),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        } else if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else if (!snapshot.hasData ||
+                            snapshot.data!.isEmpty) {
+                          return Text('No products found');
+                        }
+                        final products = snapshot.data!;
+
+                        return ListView.builder(
+                          itemCount: products.length,
+                          itemBuilder: (context, index) {
+                            final product = products[index];
+                            final productImageUrl =
+                                '$imageBaseUrl${product.imageUrl}';
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.of(context)
+                                    .push(MaterialPageRoute(builder: (context) {
+                                  return ProductDetailsPage(product: product);
+                                }));
+                              },
+                              child: ProductCard(
+                                title: product.name,
+                                price: double.parse(product.price.toString()),
+                                image: productImageUrl,
+                                backgroundColor: index.isEven
+                                    ? const Color.fromRGBO(216, 240, 253, 1)
+                                    : const Color.fromRGBO(245, 247, 249, 1),
+                              ),
+                            );
                           },
-                          child: ProductCard(
-                            title: product['title'] as String,
-                            price: product['price'] as double,
-                            image: product['imageUrl'] as String,
-                            backgroundColor: index.isEven
-                                ? const Color.fromRGBO(216, 240, 253, 1)
-                                : const Color.fromRGBO(245, 247, 249, 1),
-                          ),
                         );
                       },
                     ),

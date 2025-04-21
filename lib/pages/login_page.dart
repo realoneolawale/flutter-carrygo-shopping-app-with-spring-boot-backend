@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shopping_app/provider/cart_provider.dart';
 import 'package:shopping_app/provider/navigation_provider.dart';
 import 'package:shopping_app/services/networking.dart';
+import 'package:shopping_app/services/sharedpreferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -32,16 +33,27 @@ class _LoginPageState extends State<LoginPage> {
       NetworkHelper helper = NetworkHelper();
       dynamic response = await helper.loginUser(usernameOrEmail, password);
       // to the the product list page or profile page
+
       if (response == null) {
+        //if (!mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('If an account exists, login is invalid.')));
       } else {
         // put the logged in user in the provider
-        Provider.of<CartProvider>(context, listen: false).user = response;
+        Provider.of<CartProvider>(context, listen: false)
+            .setAuthResponseDto(response);
+        // put the user object in shared preferences
+        await SharedPreferenceHelper().saveTokenType(response!.tokenType ?? "");
+        await SharedPreferenceHelper()
+            .saveAccessToken(response.accessToken ?? "");
+        await SharedPreferenceHelper().saveId(response.id ?? 0);
+        await SharedPreferenceHelper().saveFirstName(response.firstName ?? "");
+        await SharedPreferenceHelper().saveUsername(response.username ?? "");
+        await SharedPreferenceHelper().saveEmail(response.email ?? "");
         // navigate to the product list page with the user object
-        // Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ProductList(authResponseUser: response,)),);
         context.read<NavigationProvider>().setIndex(0);
       }
+
       // remove the spinner
       setState(() {
         showSpinner = false;

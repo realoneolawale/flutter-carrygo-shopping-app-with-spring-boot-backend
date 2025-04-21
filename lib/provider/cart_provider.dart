@@ -1,23 +1,25 @@
 import 'package:flutter/cupertino.dart';
 import 'package:shopping_app/dtos/auth_response_dto.dart';
+import 'package:shopping_app/dtos/cart_response_dto.dart';
 
 class CartProvider extends ChangeNotifier {
-  final List<Map<String, dynamic>> cart = [];
+  final List<CartResponseDto> cart = [];
   // stores the logged in user
-  late AuthResponseDto user = AuthResponseDto(
-      accessToken: '',
-      tokenType: '',
-      id: 0,
-      firstName: '',
-      email: '',
-      username: '');
+  AuthResponseDto? _authResponseDto;
 
-  void addProduct(Map<String, dynamic> product) {
+  AuthResponseDto? get getAuthResponseDto => _authResponseDto;
+
+  void setAuthResponseDto(AuthResponseDto authResponseDto) {
+    _authResponseDto = authResponseDto;
+    notifyListeners();
+  }
+
+  void addProduct(CartResponseDto product) {
     cart.add(product);
     notifyListeners();
   }
 
-  void removeProduct(Map<String, dynamic> product) {
+  void removeProduct(CartResponseDto product) {
     cart.remove(product);
     notifyListeners();
   }
