@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 import 'package:provider/provider.dart';
 import 'package:shopping_app/provider/cart_provider.dart';
-import 'package:shopping_app/provider/navigation_provider.dart';
 import 'package:shopping_app/services/networking.dart';
 import 'package:shopping_app/services/sharedpreferences.dart';
 
@@ -40,8 +39,8 @@ class _LoginPageState extends State<LoginPage> {
             content: Text('If an account exists, login is invalid.')));
       } else {
         // put the logged in user in the provider
-        Provider.of<CartProvider>(context, listen: false)
-            .setAuthResponseDto(response);
+        context.read<CartProvider>().setAuthResponseDto(response);
+        context.read<CartProvider>().login();
         // put the user object in shared preferences
         await SharedPreferenceHelper().saveTokenType(response!.tokenType ?? "");
         await SharedPreferenceHelper()
@@ -51,9 +50,9 @@ class _LoginPageState extends State<LoginPage> {
         await SharedPreferenceHelper().saveUsername(response.username ?? "");
         await SharedPreferenceHelper().saveEmail(response.email ?? "");
         // navigate to the product list page with the user object
-        context.read<NavigationProvider>().setIndex(0);
+        //context.read<NavigationProvider>().setIndex(0);
+        context.read<CartProvider>().setTab(0); // or any valid tab index
       }
-
       // remove the spinner
       setState(() {
         showSpinner = false;

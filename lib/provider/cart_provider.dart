@@ -14,6 +14,11 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearAuthResponseDto() {
+    _authResponseDto = null;
+    notifyListeners();
+  }
+
   void addProduct(CartResponseDto product) {
     cart.add(product);
     notifyListeners();
@@ -21,6 +26,28 @@ class CartProvider extends ChangeNotifier {
 
   void removeProduct(CartResponseDto product) {
     cart.remove(product);
+    notifyListeners();
+  }
+
+  // get log in status
+  bool _isLoggedIn = false;
+  int _currentIndex = 0;
+  int get currentIndex => _currentIndex;
+  void setTab(int index) {
+    _currentIndex = index;
+    notifyListeners();
+  }
+
+  bool get isLoggedIn => _isLoggedIn;
+  void login() {
+    _isLoggedIn = true;
+    _currentIndex = 0;
+    notifyListeners();
+  }
+
+  void logout() {
+    _isLoggedIn = false;
+    _currentIndex = 0;
     notifyListeners();
   }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shopping_app/dtos/auth_response_dto.dart';
 import 'package:shopping_app/provider/cart_provider.dart';
-import 'package:shopping_app/provider/navigation_provider.dart';
 import 'package:shopping_app/services/networking.dart';
 import 'package:shopping_app/services/sharedpreferences.dart';
 import 'package:shopping_app/widgets/product_card.dart';
@@ -29,20 +28,24 @@ class _ProductListState extends State<ProductList> {
   int? categoryId;
   static const String imageBaseUrl = 'http://192.168.0.175:40160/';
 
-  @override
-  void initState() {
-    // set the authenticated user
-    setAuthenticatedUser();
-    //getProducts();
-    super.initState();
-  }
-
   // set the authenticated user in the shared
   setAuthenticatedUser() async {
     // set the authenticated user in the provider
-    // if user is not in the provider
-    if (authResponseUser.username!.isEmpty) {
-      if (SharedPreferenceHelper().getUsername().toString().isNotEmpty) {
+    final userDto = context.watch<CartProvider>().getAuthResponseDto;
+    if (userDto != null) {
+      if (userDto.firstName!.isNotEmpty) {
+        print("USER GOTTEN FROM PROVIDER");
+        authResponseUser.tokenType = userDto.tokenType;
+        authResponseUser.accessToken = userDto.accessToken;
+        authResponseUser.id = userDto.id;
+        authResponseUser.firstName = userDto.firstName;
+        authResponseUser.email = userDto.email;
+        authResponseUser.username = userDto.username;
+      }
+    } else {
+      // if user is not in the provider
+      if (SharedPreferenceHelper().getUsername().toString().length > 1) {
+        print("USER GOTTEN FROM SHARED PREFERENCES");
         // set the user from the shared preferences
         authResponseUser.tokenType =
             await SharedPreferenceHelper().getTokenType() ?? "";
@@ -60,78 +63,75 @@ class _ProductListState extends State<ProductList> {
   }
 
   @override
+  void initState() {
+    // set user
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // set the user
+    setAuthenticatedUser();
     // logged in user icons
     List<Widget> icons = [];
     // track the selected category
     selectedFilter = filters[0];
-    // set the currently logged in user
-    final navigationProvider = Provider.of<NavigationProvider>(context);
-    final userDto = context.watch<CartProvider>().getAuthResponseDto;
-    if (userDto != null) {
-      if (userDto.firstName!.isNotEmpty) {
-        authResponseUser.username = userDto.username;
-        authResponseUser.firstName = userDto.firstName;
-      }
-    }
-    print("Product List Username: " + authResponseUser.username.toString());
-    print("Product List Firstname: " + authResponseUser.firstName.toString());
-    // set the logged in user
-    if (authResponseUser.firstName.toString().isNotEmpty) {
-      loggedInUser = "Hi ${authResponseUser.firstName} ⛄️";
-      icons.add(IconButton(
-        icon: Icon(Icons.logout),
-        onPressed: () {
-          //Implement logout functionality - set auth user to null
-          showDialog(
-              barrierDismissible: false,
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  title: Text(
-                    'Logout',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  content: Text('Are you sure you want to logout?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () async {
-                        Navigator.of(context).pop();
-                        Provider.of<CartProvider>(context, listen: false)
-                            .setAuthResponseDto(AuthResponseDto(
-                                accessToken: '',
-                                tokenType: '',
-                                id: 0,
-                                firstName: '',
-                                email: '',
-                                username: ''));
-                        await SharedPreferenceHelper().clearSharedPreference();
-                        // redirect to the product list tab
-                        navigationProvider.setIndex(0);
-                      },
-                      child: Text(
-                        'Yes',
-                        style: TextStyle(
-                            color: Colors.blue, fontWeight: FontWeight.bold),
-                      ),
+    // set the logged in user header
+    setState(() {
+      if (authResponseUser.firstName.toString().isNotEmpty) {
+        loggedInUser = "Hi ${authResponseUser.firstName} ⛄️";
+        icons.add(IconButton(
+          icon: Icon(Icons.logout),
+          onPressed: () {
+            //Implement logout functionality - set auth user to null
+            showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text(
+                      'Logout',
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    TextButton(
-                        onPressed: () {
+                    content: Text('Are you sure you want to logout?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () async {
                           Navigator.of(context).pop();
+                          // clear shared preferences
+                          await SharedPreferenceHelper()
+                              .clearSharedPreference();
+                          // redirect to the product list tab
+                          // clear the provider than authenticated user
+                          context.read<CartProvider>().clearAuthResponseDto();
+                          context.read<CartProvider>().logout();
+                          context.read<CartProvider>().setTab(0);
+                          print("USER IS LOGGED OUT!!!!");
                         },
                         child: Text(
-                          'No',
+                          'Yes',
                           style: TextStyle(
-                              color: Colors.red, fontWeight: FontWeight.bold),
-                        )),
-                  ],
-                );
-              });
-        },
-      ));
-    } else {
-      loggedInUser = '👟Welcome';
-    }
+                              color: Colors.blue, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(
+                            'No',
+                            style: TextStyle(
+                                color: Colors.red, fontWeight: FontWeight.bold),
+                          )),
+                    ],
+                  );
+                });
+          },
+        ));
+      } else {
+        loggedInUser = '👟Welcome';
+      }
+    });
 
     //final size = MediaQuery.of(context).size; // > 650 is a bigger screen size like tablet and desktop
     final size = MediaQuery.sizeOf(context);
