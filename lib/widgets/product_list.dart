@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shopping_app/dtos/auth_response_dto.dart';
+import 'package:shopping_app/dtos/category_response_dto.dart';
+import 'package:shopping_app/dtos/product_response_dto.dart';
 import 'package:shopping_app/provider/cart_provider.dart';
 import 'package:shopping_app/services/networking.dart';
 import 'package:shopping_app/services/sharedpreferences.dart';
@@ -15,7 +17,12 @@ class ProductList extends StatefulWidget {
 }
 
 class _ProductListState extends State<ProductList> {
-  final List<String> filters = const ['All', 'Addidas', 'Nike', 'Bata', 'Puma'];
+  // product and categories from db
+  List<CategoryResponseDto> _categories = [
+    CategoryResponseDto(name: 'All', id: 0)
+  ];
+  List<ProductResponseDto> products = [];
+
   late String selectedFilter;
   late String loggedInUser;
   late AuthResponseDto authResponseUser = AuthResponseDto(
@@ -45,7 +52,7 @@ class _ProductListState extends State<ProductList> {
     } else {
       // if user is not in the provider
       if (SharedPreferenceHelper().getUsername().toString().length > 1) {
-        print("USER GOTTEN FROM SHARED PREFERENCES");
+        //print("USER GOTTEN FROM SHARED PREFERENCES");
         // set the user from the shared preferences
         authResponseUser.tokenType =
             await SharedPreferenceHelper().getTokenType() ?? "";
@@ -62,9 +69,15 @@ class _ProductListState extends State<ProductList> {
     }
   }
 
+  getCategories() async {
+    List<CategoryResponseDto> dbCategories =
+        await NetworkHelper().getCategories();
+    _categories.addAll(dbCategories);
+  }
+
   @override
   void initState() {
-    // set user
+    getCategories(); // load the categories when the page loads
     super.initState();
   }
 
@@ -75,64 +88,60 @@ class _ProductListState extends State<ProductList> {
     // logged in user icons
     List<Widget> icons = [];
     // track the selected category
-    selectedFilter = filters[0];
+    selectedFilter = _categories[0].name;
     // set the logged in user header
-    setState(() {
-      if (authResponseUser.firstName.toString().isNotEmpty) {
-        loggedInUser = "Hi ${authResponseUser.firstName} ⛄️";
-        icons.add(IconButton(
-          icon: Icon(Icons.logout),
-          onPressed: () {
-            //Implement logout functionality - set auth user to null
-            showDialog(
-                barrierDismissible: false,
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: Text(
-                      'Logout',
-                      style: Theme.of(context).textTheme.titleMedium,
+    if (context.read<CartProvider>().getAuthResponseDto != null) {
+      loggedInUser = "Hi ${authResponseUser.firstName} ⛄️";
+      icons.add(IconButton(
+        icon: Icon(Icons.logout),
+        onPressed: () {
+          //Implement logout functionality - set auth user to null
+          showDialog(
+              barrierDismissible: false,
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text(
+                    'Logout',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  content: Text('Are you sure you want to logout?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        // clear shared preferences
+                        await SharedPreferenceHelper().clearSharedPreference();
+                        // redirect to the product list tab
+                        // clear the provider than authenticated user
+                        context.read<CartProvider>().clearAuthResponseDto();
+                        context.read<CartProvider>().logout();
+                        context.read<CartProvider>().setTab(0);
+                        print("USER IS LOGGED OUT!!!!");
+                      },
+                      child: Text(
+                        'Yes',
+                        style: TextStyle(
+                            color: Colors.blue, fontWeight: FontWeight.bold),
+                      ),
                     ),
-                    content: Text('Are you sure you want to logout?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () async {
+                    TextButton(
+                        onPressed: () {
                           Navigator.of(context).pop();
-                          // clear shared preferences
-                          await SharedPreferenceHelper()
-                              .clearSharedPreference();
-                          // redirect to the product list tab
-                          // clear the provider than authenticated user
-                          context.read<CartProvider>().clearAuthResponseDto();
-                          context.read<CartProvider>().logout();
-                          context.read<CartProvider>().setTab(0);
-                          print("USER IS LOGGED OUT!!!!");
                         },
                         child: Text(
-                          'Yes',
+                          'No',
                           style: TextStyle(
-                              color: Colors.blue, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: Text(
-                            'No',
-                            style: TextStyle(
-                                color: Colors.red, fontWeight: FontWeight.bold),
-                          )),
-                    ],
-                  );
-                });
-          },
-        ));
-      } else {
-        loggedInUser = '👟Welcome';
-      }
-    });
-
+                              color: Colors.red, fontWeight: FontWeight.bold),
+                        )),
+                  ],
+                );
+              });
+        },
+      ));
+    } else {
+      loggedInUser = '👟Welcome';
+    }
     //final size = MediaQuery.of(context).size; // > 650 is a bigger screen size like tablet and desktop
     final size = MediaQuery.sizeOf(context);
 
@@ -161,6 +170,7 @@ class _ProductListState extends State<ProductList> {
                 ),
                 const Expanded(
                   child: TextField(
+                    //onChanged: () {},
                     decoration: InputDecoration(
                       hintText: 'Search',
                       icon: Icon(Icons.search),
@@ -176,26 +186,27 @@ class _ProductListState extends State<ProductList> {
               height: 120,
               child: ListView.builder(
                 // ListView.builder will take the entire height of the screen
-                itemCount: filters.length,
+                itemCount: _categories.length,
                 scrollDirection: Axis.horizontal,
                 itemBuilder: (context, index) {
-                  final filter = filters[index];
+                  final filter = _categories[index];
                   return Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8.0),
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
-                          selectedFilter = filter;
+                          selectedFilter = filter.name;
+                          categoryId = filter.id;
                         });
                       },
                       child: Chip(
-                        backgroundColor: selectedFilter == filter
+                        backgroundColor: selectedFilter == filter.name
                             ? Theme.of(context).colorScheme.primary
                             : const Color.fromRGBO(245, 247, 249, 1),
                         side: const BorderSide(
                           color: Color.fromRGBO(245, 247, 249, 1),
                         ),
-                        label: Text(filter),
+                        label: Text(filter.name),
                         labelStyle: TextStyle(fontSize: 16),
                         padding: EdgeInsets.symmetric(
                             horizontal: 20.0, vertical: 15.0),
@@ -209,7 +220,7 @@ class _ProductListState extends State<ProductList> {
             ),
             Expanded(
               child: size.width > 650
-                  ? FutureBuilder(
+                  ? FutureBuilder<List<ProductResponseDto>>(
                       future: NetworkHelper().getProducts(categoryId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
@@ -254,7 +265,7 @@ class _ProductListState extends State<ProductList> {
                         );
                       },
                     )
-                  : FutureBuilder(
+                  : FutureBuilder<List<ProductResponseDto>>(
                       future: NetworkHelper().getProducts(categoryId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==

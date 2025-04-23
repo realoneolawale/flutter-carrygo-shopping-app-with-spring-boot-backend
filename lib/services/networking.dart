@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shopping_app/dtos/auth_response_dto.dart';
 import 'package:shopping_app/dtos/cart_response_dto.dart';
+import 'package:shopping_app/dtos/category_response_dto.dart';
 import 'package:shopping_app/dtos/product_response_dto.dart';
 import 'package:shopping_app/dtos/register_request_dto.dart';
 
@@ -12,6 +13,7 @@ const String baseUrl = 'http://10.0.2.2:40160/'; // android emulator
 const String userUrl = '${baseUrl}api/auth';
 const String productUrl = '${baseUrl}api/products';
 const String shoppingUrl = '${baseUrl}api/shopping';
+const String categoryUrl = '${baseUrl}api/categories';
 
 class NetworkHelper {
   late final String url;
@@ -95,10 +97,8 @@ class NetworkHelper {
   }
 
   Future<List<ProductResponseDto>> getProducts(int? categoryId) async {
-    // add the headers
-    //final headers = {'Content-Type': 'application/json'};
     // add the url
-    if (categoryId != null) {
+    if (categoryId != null && categoryId > 0) {
       url = "$productUrl/category/$categoryId";
     } else {
       url = productUrl;
@@ -109,17 +109,37 @@ class NetworkHelper {
       //final response = await client.get(Uri.parse(url));
       if (response.statusCode == 200) {
         // get json string and convert JSON string to List Map
-        List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
+        final List<dynamic> jsonList = jsonDecode(response.body);
         // create DTO from Map
-        List<ProductResponseDto> responseDTOs =
-            jsonList.map((json) => ProductResponseDto.fromJson(json)).toList();
-        return responseDTOs;
+        return jsonList
+            .map((json) => ProductResponseDto.fromJson(json))
+            .toList();
       } else {
-        return [];
+        throw Exception("No products found");
       }
     } catch (e) {
-      print(e);
-      return [];
+      throw Exception("Error occurred fetching products");
+    }
+  }
+
+  // get categories
+  Future<List<CategoryResponseDto>> getCategories() async {
+    url = categoryUrl;
+    // make the login request
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        // get json string and convert JSON string to List Map
+        final List<dynamic> jsonList = jsonDecode(response.body);
+        // create DTO from Map
+        return jsonList
+            .map((json) => CategoryResponseDto.fromJson(json))
+            .toList();
+      } else {
+        throw Exception("No categories found");
+      }
+    } catch (e) {
+      throw Exception("Error occurred fetching categories");
     }
   }
 }
