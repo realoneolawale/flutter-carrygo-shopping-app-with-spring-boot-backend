@@ -69,6 +69,7 @@ class _CartPageState extends State<CartPage> {
                       itemCount: carts.length,
                       itemBuilder: (context, index) {
                         final cartItem = carts[index];
+                        print("SIZE: ${cartItem.size}");
                         return ListTile(
                           leading: CircleAvatar(
                             backgroundImage: NetworkImage(
@@ -134,7 +135,7 @@ class _CartPageState extends State<CartPage> {
                             ),
                           ),
                           title: Text(
-                            cartItem.size!.isEmpty
+                            cartItem.size == null
                                 ? '${cartItem.productName.toString()} | \$${cartItem.price.toStringAsFixed(2).toString()}'
                                 : '${cartItem.productName.toString()} | ${cartItem.size} | \$${cartItem.price.toStringAsFixed(2).toString()}',
                             style: Theme.of(context).textTheme.bodySmall,
