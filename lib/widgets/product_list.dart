@@ -21,7 +21,6 @@ class _ProductListState extends State<ProductList> {
   List<CategoryResponseDto> _categories = [
     CategoryResponseDto(name: 'All', id: 0)
   ];
-  List<ProductResponseDto> products = [];
 
   late String selectedFilter;
   late String loggedInUser;
@@ -41,7 +40,7 @@ class _ProductListState extends State<ProductList> {
     final userDto = context.watch<CartProvider>().getAuthResponseDto;
     if (userDto != null) {
       if (userDto.firstName!.isNotEmpty) {
-        print("USER GOTTEN FROM PROVIDER");
+        //print("USER GOTTEN FROM PROVIDER");
         authResponseUser.tokenType = userDto.tokenType;
         authResponseUser.accessToken = userDto.accessToken;
         authResponseUser.id = userDto.id;
@@ -73,6 +72,7 @@ class _ProductListState extends State<ProductList> {
     List<CategoryResponseDto> dbCategories =
         await NetworkHelper().getCategories();
     _categories.addAll(dbCategories);
+    setState(() {});
   }
 
   @override

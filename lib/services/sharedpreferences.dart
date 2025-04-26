@@ -53,9 +53,9 @@ class SharedPreferenceHelper {
     return prefs.getString(tokenTypeKey);
   }
 
-  Future<int?> getId() async {
+  Future<int> getId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(idKey);
+    return prefs.getInt(idKey) ?? 0;
   }
 
   Future<String?> getFirstName() async {

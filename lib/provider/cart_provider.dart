@@ -3,7 +3,6 @@ import 'package:shopping_app/dtos/auth_response_dto.dart';
 import 'package:shopping_app/dtos/cart_response_dto.dart';
 
 class CartProvider extends ChangeNotifier {
-  final List<CartResponseDto> cart = [];
   // stores the logged in user
   AuthResponseDto? _authResponseDto;
 
@@ -18,6 +17,10 @@ class CartProvider extends ChangeNotifier {
     _authResponseDto = null;
     notifyListeners();
   }
+
+  List<CartResponseDto> cart = [];
+
+  List<CartResponseDto> get getCart => cart;
 
   void addProduct(CartResponseDto product) {
     cart.add(product);

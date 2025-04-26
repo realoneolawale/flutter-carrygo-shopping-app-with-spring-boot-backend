@@ -84,15 +84,124 @@ class NetworkHelper {
         // get json string and convert JSON string to List Map
         List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
         // create DTO from Map
-        List<CartResponseDto> responseDTOs =
-            jsonList.map((json) => CartResponseDto.fromJson(json)).toList();
-        return responseDTOs;
+        return jsonList.map((json) => CartResponseDto.fromJson(json)).toList();
       } else {
         return [];
       }
     } catch (e) {
       print(e);
       return [];
+    }
+  }
+
+  Future addUserCartItem(int userId, CartResponseDto cart, int? sizeId) async {
+    // header
+    final headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    // add the url
+    url = "$shoppingUrl/add-to-cart";
+
+    // add the body
+    final body = jsonEncode({
+      'price': cart.price,
+      'qty': cart.qty,
+      'productId': cart.productId,
+      'userId': userId,
+      'sizeId': sizeId
+    });
+
+    /*
+    {
+  "price": 0,
+  "qty": 1,
+  "productId": 0,
+  "userId": 0
+}
+     */
+    // make the login request
+    try {
+      final response =
+          await http.post(Uri.parse(url), headers: headers, body: body);
+      if (response.statusCode == 200) {
+        String data = response.body;
+        return data;
+      } else {
+        throw Exception("Cannot add to cart");
+      }
+    } catch (e) {
+      throw Exception("Cannot add to cart $e");
+    }
+  }
+
+  Future deleteUserCartItem(
+      int productId, int userId, String accessToken) async {
+    // header
+    final headers = {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $accessToken'
+    };
+    // add the url
+    url = "$shoppingUrl/delete-cart-item/$productId/$userId";
+    // make the login request
+    try {
+      final response = await http.delete(Uri.parse(url), headers: headers);
+      if (response.statusCode == 200) {
+        String data = response.body;
+        return data;
+      } else {
+        throw Exception("Error deleting item from cart");
+      }
+    } catch (e) {
+      throw Exception("Cannot delete item from cart $e");
+    }
+  }
+
+  Future increaseUserCartItem(
+      int productId, int userId, String accessToken, String action) async {
+    // header
+    final headers = {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $accessToken'
+    };
+    // add the url
+    url = "$shoppingUrl/update-cart/$productId/$userId/increase";
+    // make the login request
+    try {
+      final response = await http.put(Uri.parse(url), headers: headers);
+      if (response.statusCode == 200) {
+        String data = response.body;
+        return data;
+      } else {
+        throw Exception("Error increasing item in cart");
+      }
+    } catch (e) {
+      throw Exception("Cannot increase item in cart $e");
+    }
+  }
+
+  Future decreaseUserCartItem(
+      int productId, int userId, String accessToken, String action) async {
+    // header
+    final headers = {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $accessToken'
+    };
+    // add the url
+    url = "$shoppingUrl/update-cart/$productId/$userId/decrease";
+    // make the login request
+    try {
+      final response = await http.put(Uri.parse(url), headers: headers);
+      if (response.statusCode == 200) {
+        String data = response.body;
+        return data;
+      } else {
+        throw Exception("Error decreasing item in cart");
+      }
+    } catch (e) {
+      throw Exception("Cannot decrease item in cart $e");
     }
   }
 

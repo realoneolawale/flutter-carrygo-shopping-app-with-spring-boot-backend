@@ -1,3 +1,5 @@
+import 'package:shopping_app/dtos/size_response_dto.dart';
+
 class ProductResponseDto {
   late final int id;
   late final String name;
@@ -5,6 +7,7 @@ class ProductResponseDto {
   late final String imageUrl;
   late final double price;
   late final int categoryId;
+  late final List<SizeResponseDto> sizes;
   late final bool trending;
   late final bool bestSelling;
 
@@ -15,6 +18,7 @@ class ProductResponseDto {
     required this.imageUrl,
     required this.price,
     required this.categoryId,
+    required this.sizes,
     required this.trending,
     required this.bestSelling,
   });
@@ -28,6 +32,9 @@ class ProductResponseDto {
       imageUrl: json['imageUrl'],
       price: json['price'],
       categoryId: json['categoryId'],
+      sizes: (json['sizes'] as List)
+          .map((sizeJson) => SizeResponseDto.fromJson(sizeJson))
+          .toList(),
       trending: json['trending'],
       bestSelling: json['bestSelling'],
     );
@@ -42,6 +49,7 @@ class ProductResponseDto {
       'imageUrl': imageUrl,
       'price': price,
       'categoryId': categoryId,
+      'sizes': sizes,
       'trending': trending,
       'bestSelling': bestSelling,
     };

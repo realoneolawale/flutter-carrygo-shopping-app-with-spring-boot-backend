@@ -1,14 +1,16 @@
 class CartResponseDto {
   int? id;
-  late final int price;
+  String? size;
+  late final double price;
   late final int productId;
   late final int qty;
-  late final int totalAmount;
+  late final double totalAmount;
   late final String imageUrl;
   late final String productName;
 
   CartResponseDto({
     this.id,
+    required this.size,
     required this.price,
     required this.productId,
     required this.qty,
@@ -21,6 +23,7 @@ class CartResponseDto {
   factory CartResponseDto.fromJson(Map<String, dynamic> json) {
     return CartResponseDto(
       id: json['id'],
+      size: json['size'],
       price: json['price'],
       productId: json['productId'],
       qty: json['qty'],
@@ -34,6 +37,7 @@ class CartResponseDto {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'size': size,
       'price': price,
       'productId': productId,
       'qty': qty,
