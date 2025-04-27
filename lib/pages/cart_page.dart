@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:pay_with_paystack/pay_with_paystack.dart';
 import 'package:shopping_app/dtos/cart_response_dto.dart';
 import 'package:shopping_app/services/networking.dart';
 import 'package:shopping_app/services/sharedpreferences.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
-
   @override
   State<CartPage> createState() => _CartPageState();
 }
@@ -13,7 +13,10 @@ class CartPage extends StatefulWidget {
 class _CartPageState extends State<CartPage> {
   late int userId = 0;
   late String accessToken = '';
+  late String email = '';
   static const String imageBaseUrl = 'http://192.168.0.175:40160/';
+  bool _isLoading = false;
+  late double cartTotal = 0.0;
 
   void getUserId() async {
     userId = await SharedPreferenceHelper().getId();
@@ -21,6 +24,63 @@ class _CartPageState extends State<CartPage> {
 
   void getAccessToken() async {
     accessToken = (await SharedPreferenceHelper().getAccessTokenId())!;
+  }
+
+  void getEmail() async {
+    email = (await SharedPreferenceHelper().getEmail())!;
+  }
+
+  void payWithPayStack() {
+    // validate the field
+    if (cartTotal <= 0.0) {
+      _showMessage("Cart total cannot be 0");
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    // begin the checkout
+    final uniqueTransRef = PayWithPayStack().generateUuidV4();
+    PayWithPayStack().now(
+        context: context,
+        secretKey: "sk_test_1d61b86462cbe9fc8c0a3baff1eb02f030f63ac0",
+        customerEmail: email,
+        reference: uniqueTransRef,
+        currency: "NGN",
+        amount: cartTotal,
+        callbackUrl: "https://forlet.com.ng",
+        transactionCompleted: (paymentData) {
+          setState(() {
+            _isLoading = false;
+          });
+          // TODO: update the database here...like order confirmation and so.
+          _showMessage('Payment Successful!\n ${paymentData.toString()}',
+              success: true);
+        },
+        transactionNotCompleted: (reason) {
+          setState(() {
+            _isLoading = false;
+          });
+          _showMessage("Payment failed or cancelled: $reason");
+        });
+  }
+
+  void _showMessage(String message, {bool success = false}) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(success ? 'Success' : 'Message'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -61,6 +121,8 @@ class _CartPageState extends State<CartPage> {
               final carts = snapshot.data;
               final total = carts!
                   .fold<double>(0.0, (sum, cart) => sum + cart.totalAmount);
+              // set the cart
+              cartTotal = total;
 
               return Column(
                 children: [
@@ -210,23 +272,26 @@ class _CartPageState extends State<CartPage> {
                           'Total: \$${total.toStringAsFixed(2)}',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
-                        ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Coming soon!!!')));
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Theme.of(context).colorScheme.primary,
-                            //minimumSize: const Size(double.infinity, 50),
-                            fixedSize: const Size(200, 50),
-                          ),
-                          child: const Text(
-                            'Checkout',
-                            style: TextStyle(color: Colors.black, fontSize: 16),
-                          ),
-                        ),
+                        _isLoading
+                            ? const CircularProgressIndicator()
+                            : ElevatedButton(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text('Coming soon!!!')));
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.primary,
+                                  //minimumSize: const Size(double.infinity, 50),
+                                  fixedSize: const Size(200, 50),
+                                ),
+                                child: const Text(
+                                  'Checkout',
+                                  style: TextStyle(
+                                      color: Colors.black, fontSize: 16),
+                                ),
+                              ),
                       ],
                     ),
                   ),
