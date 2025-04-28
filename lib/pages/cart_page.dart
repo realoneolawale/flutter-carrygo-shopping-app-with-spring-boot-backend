@@ -87,6 +87,7 @@ class _CartPageState extends State<CartPage> {
   Widget build(BuildContext context) {
     getUserId();
     getAccessToken();
+    getEmail();
     setState(() {});
     return Scaffold(
       appBar: AppBar(
@@ -276,9 +277,7 @@ class _CartPageState extends State<CartPage> {
                             ? const CircularProgressIndicator()
                             : ElevatedButton(
                                 onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content: Text('Coming soon!!!')));
+                                  payWithPayStack();
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor:
